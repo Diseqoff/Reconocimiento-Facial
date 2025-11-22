@@ -5,7 +5,6 @@ import os
 import time 
 import pytesseract
 import re
-from datetime import datetime
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
@@ -81,8 +80,6 @@ modo_distancia = False
 dni_detectado = "Esperando ..."
 nombre_dni_actual = ""
 nombre_para_saludo = ""
-historial_de_registros = []
-panel_registros = np.ones((500, 400, 3), np.uint8) * 255
 
 ## 3 Bucle que compara las huellas faciales
 
@@ -126,11 +123,6 @@ while True:
 
                     tiempo_saludo = current_time + 5.0
                     tiempo_espera = current_time + 10.0
-
-                    hora_actual = datetime.now().strftime("%H:%M:%S")
-                    registro_texto = f"{nombre} - {hora_actual}"
-                    historial_de_registros.append(registro_texto)
-                    print(f"[REGISTRO] {registro_texto}")
 
             else:
 
@@ -192,9 +184,6 @@ while True:
                             cv2.imwrite(ruta_guardado, cara_recortada)
 
                             print(f"Foto guardada como: {nuevo_nombre_archivo}")
-
-                            hora_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            historial_de_registros.append(f"INTRUSO ID{id_real} - {hora_actual}")
 
             nombres_caras_en_pantalla.append(nombre)
 
@@ -281,26 +270,22 @@ while True:
 
                 if busqueda_dni:
 
-                    numero_leido = busqueda_dni.group(0)
-                    print(f"DNI detectado: {numero_leido}")
+                    dni_detectado = busqueda_dni.group(0)
+                    print(f"DNI detectado: {dni_detectado}")
 
-                    if numero_leido in db_dnis:
+                    if dni_detectado in db_dnis:
 
-                        dni_detectado = f"{numero_leido} - {db_dnis[numero_leido]}"
+                        dni_detectado = f"{dni_detectado} - {db_dnis[dni_detectado]}"
 
                         if current_time > tiempo_espera:
 
-                            nombre_para_saludo = db_dnis[numero_leido]
+                            nombre_para_saludo = db_dnis[busqueda_dni.group(0)]
                             tiempo_saludo = current_time + 5.0
                             tiempo_espera = current_time + 10.0
 
-                            hora_actual = datetime.now().strftime("%H:%M:%S")
-                            historial_de_registros.append(f"{nombre_para_saludo} (DNI) - {hora_actual}")
-                            print(f"[REGISTRO] {nombre_para_saludo} (DNI) - {hora_actual}")
-
                     else:
 
-                        dni_detectado = f"{numero_leido} - No registrado"
+                        dni_detectado = f"{dni_detectado} - No registrado"
 
             except Exception as e:
 
@@ -316,22 +301,6 @@ while True:
         cv2.putText(frame, mensaje, (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1.5, (255, 0, 0), 1)
 
     cv2.imshow('Reconocimiento Facial', frame)
-
-## 4.5 Pantalla de registros
-
-    panel_registros[:] = 255
-
-    cv2.putText(panel_registros, "Registros de Acceso:", (20, 40), cv2.FONT_HERSHEY_TRIPLEX, 1, (0, 0, 0), 2)
-    cv2.line(panel_registros, (20, 50), (380, 50), (0, 0, 0), 2)
-    y_pos = 80
-
-    for registro in historial_de_registros[-12:]:
-
-        cv2.putText(panel_registros, registro, (20, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (50, 50, 50), 1)
-        y_pos += 30
-        
-    cv2.imshow('Reconocimiento Facial', frame)
-    cv2.imshow('Panel de Registros', panel_registros)
 
 ## 5 Teclas
 
